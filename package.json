@@ -1,0 +1,7 @@
+{
+  "name": "@emmiep/rollup-plugin-split-bundle",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Emmie Päivärinta <Emmie.Paivarinta@gmail.com>",
+  "license": "MIT"
+}
