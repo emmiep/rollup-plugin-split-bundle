@@ -90,7 +90,7 @@ function modulesToSource(modules: Modules) {
 }
 
 type StringKeys<T = any> = { [key: string]: T };
-type Updater = ((value: any) => any) | any;
+type Updater = ((value: any) => void) | any;
 
 function updateDeep(root: StringKeys, path: string, updater: Updater, defaultValue?: any) {
   const keys = path.split('.');
