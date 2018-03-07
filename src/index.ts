@@ -30,12 +30,12 @@ export function consumer(consumerOptions?: PartialConsumerOptions): Rollup.Plugi
     name: 'splitBundle.consumer',
 
     options(opts: ExtendedOptions) {
-      opts.output = Object.assign(opts.output || {}, {
-        name: mergedOptions.name,
-        globals: Object.assign(opts.output && opts.output.globals || {}, prefixModuleExports(mergedOptions.modules, mergedOptions.name))
-      });
+      const {modules, name} = mergedOptions;
+      const prefixedModules = prefixModuleExports(modules, name);
+      const moduleNames = getModuleNames(modules);
 
-      opts.external = (opts.external as string[] || []).concat(getModuleNames(mergedOptions.modules));
+      updateDeep(opts, 'output.globals', (globals: Modules) => Object.assign(globals, prefixedModules), {});
+      updateDeep(opts, 'external', (external: string[]) => external.push(...moduleNames), []);
     }
   };
 }
@@ -55,9 +55,9 @@ export function producer(producerOptions?: PartialProducerOptions): Rollup.Plugi
     name: 'splitBundle.producer',
 
     options(opts: ExtendedOptions) {
-      opts.output = Object.assign(opts.output || {}, {
-        name: mergedOptions.name
-      });
+      const {name} = mergedOptions;
+
+      updateDeep(opts, 'output.name', name);
     },
 
     load(id) {
@@ -87,5 +87,32 @@ function modulesToSource(modules: Modules) {
   return Array.from(Object.entries(modules))
     .map(([moduleName, exportName]) => `export {default as ${exportName}} from ${JSON.stringify(moduleName)};`)
     .join('\n');
+}
+
+type StringKeys<T = any> = { [key: string]: T };
+type Updater = ((value: any) => any) | any;
+
+function updateDeep(root: StringKeys, path: string, updater: Updater, defaultValue?: any) {
+  const keys = path.split('.');
+  const [targetKey] = keys.splice(-1);
+
+  const target: StringKeys = keys.reduce((object, key) => {
+    if (object && typeof object != 'object') {
+      throw new Error(`Expected object, was ${typeof object}`);
+    } else if (object && key in object) {
+      return object[key];
+    } else {
+      return object[key] = {};
+    }
+  }, root);
+
+  const value = (typeof target[targetKey] != 'undefined' && target[targetKey] != null) ? target[targetKey] : defaultValue;
+
+  if (typeof updater == 'function') {
+    target[targetKey] = value;
+    updater(value);
+  } else {
+    target[targetKey] = updater;
+  }
 }
 
