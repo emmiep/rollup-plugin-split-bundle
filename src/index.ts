@@ -4,7 +4,7 @@ interface ExtendedOptions extends Rollup.InputOptions {
   output?: Rollup.OutputOptions;
 }
 
-type Modules = { [name: string]: string };
+type Modules = { [name: string]: string } | string[];
 
 interface SharedOptions {
   name: string,
@@ -31,7 +31,7 @@ export function consumer(consumerOptions?: PartialConsumerOptions): Rollup.Plugi
 
     options(opts: ExtendedOptions) {
       const {modules, name} = mergedOptions;
-      const prefixedModules = prefixModuleExports(modules, name);
+      const prefixedModules = prefixModuleExports(sanitizedModules(modules), name);
       const moduleNames = getModuleNames(modules);
 
       updateDeep(opts, 'output.globals', (globals: Modules) => Object.assign(globals, prefixedModules), {});
@@ -63,30 +63,63 @@ export function producer(producerOptions?: PartialProducerOptions): Rollup.Plugi
     load(id) {
       if (firstLoad) {
         firstLoad = false;
-        return modulesToSource(mergedOptions.modules);
+        return modulesToSource(sanitizedModules(mergedOptions.modules));
       }
     }
   };
 }
 
 function getModuleNames(modules: Modules): string[] {
-  return Object.keys(modules);
+  return (modules instanceof Array) ? modules : Object.keys(modules);
 }
 
 function prefixModuleExports(modules: Modules, prefix: string): Modules {
   const prefixedModules: Modules = {};
 
-  for (const [moduleName, moduleExport] of Object.entries(modules)) {
-    prefixedModules[moduleName] = `${prefix}.${moduleExport}`;
+  if (modules instanceof Array) {
+    for (const moduleName of modules) {
+      prefixedModules[moduleName] = `${prefix}[${moduleName}]`;
+    }
+  } else {
+    for (const [moduleName, moduleExport] of Object.entries(modules)) {
+      prefixedModules[moduleName] = `${prefix}.${moduleExport}`;
+    }
   }
 
   return prefixedModules;
 }
 
 function modulesToSource(modules: Modules) {
+  if (modules instanceof Array) {
+    throw new Error('modules should be an object');
+  }
+
   return Array.from(Object.entries(modules))
     .map(([moduleName, exportName]) => `export {default as ${exportName}} from ${JSON.stringify(moduleName)};`)
     .join('\n');
+}
+
+function sanitizedModules(modules: Modules) {
+  if (modules instanceof Array) {
+    const sanitizedModules: Modules = {};
+
+    for (const moduleName of modules) {
+      sanitizedModules[moduleName] = sanitizeExportName(moduleName);
+    }
+
+    return sanitizedModules;
+  }
+
+  return modules;
+}
+
+function sanitizeExportName(moduleName: string): string {
+  return moduleName
+    .split(/[^a-zA-Z0-9_$]+/g)
+    .map((part) => part.toLowerCase())
+    .map((part) => part.replace(/^[a-z]/, (letter) => letter.toUpperCase()))
+    .join('')
+    .replace(/^([0-9])/, '_$1');
 }
 
 type StringKeys<T = any> = { [key: string]: T };
