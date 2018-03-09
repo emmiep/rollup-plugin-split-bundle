@@ -1,6 +1,7 @@
 {
   "name": "@emmiep/rollup-plugin-split-bundle",
   "version": "1.0.0",
+  "description": "An experimental bundle splitter plugin for Rollup",
   "main": "dist/rollup-plugin-split-bundle.cjs.js",
   "module": "dist/rollup-plugin-split-bundle.es.js",
   "author": "Emmie Päivärinta <Emmie.Paivarinta@gmail.com>",
