@@ -1,7 +1,29 @@
 {
   "name": "@emmiep/rollup-plugin-split-bundle",
   "version": "1.0.0",
-  "main": "index.js",
+  "description": "An experimental bundle splitter plugin for Rollup",
+  "main": "dist/rollup-plugin-split-bundle.cjs.js",
+  "module": "dist/rollup-plugin-split-bundle.es.js",
   "author": "Emmie Päivärinta <Emmie.Paivarinta@gmail.com>",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/emmiep/rollup-plugin-split-bundle.git"
+  },
+  "keywords": [
+    "rollup-plugin",
+    "bundle splitting"
+  ],
+  "scripts": {
+    "build": "$npm_execpath run clean && rollup -c",
+    "watch": "$npm_execpath run build -w",
+    "clean": "rm -rf ./dist",
+    "prepublish": "$npm_execpath run build"
+  },
+  "dependencies": {
+    "rollup": "^0.56.5",
+    "rollup-plugin-typescript2": "^0.12.0",
+    "rollup-watch": "^4.3.1",
+    "typescript": "^2.7.2"
+  }
 }
