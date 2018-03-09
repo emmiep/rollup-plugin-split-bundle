@@ -4,7 +4,9 @@ import {RollupOptions, SharedOptions, defaultSharedOptions} from './options';
 import {modulesToSource, sanitizedModules} from './modules';
 import {updateDeep} from './objects';
 
-export interface ProducerOptions extends SharedOptions {}
+export interface ProducerOptions extends SharedOptions {
+  fallbackInputPath?: RollupOptions['input']
+}
 
 type PartialProducerOptions = {
   [K in keyof ProducerOptions]?: ProducerOptions[K]
@@ -22,9 +24,13 @@ export function producer(producerOptions?: PartialProducerOptions): Plugin {
     name: pluginName,
 
     options(opts: RollupOptions) {
-      const {name} = mergedOptions;
+      const {name, fallbackInputPath} = mergedOptions;
 
       updateDeep(opts, 'output.name', name);
+
+      if (typeof fallbackInputPath != 'undefined' && typeof opts.input == 'undefined') {
+        opts.input = fallbackInputPath;
+      }
     },
 
     load(id) {
@@ -37,13 +43,14 @@ export function producer(producerOptions?: PartialProducerOptions): Plugin {
 }
 
 export function producerFromConfig(config: RollupOptions): Plugin {
+  const fallbackInputPath = config.input;
   const consumerOptions = getConsumerOptions(config);
 
   if (!consumerOptions) {
     throw new Error('Consumer plugin not found');
   }
 
-  const producerOptions: ProducerOptions = consumerOptions;
+  const producerOptions: ProducerOptions = Object.assign({}, consumerOptions, {fallbackInputPath});
   return producer(producerOptions);
 }
 
