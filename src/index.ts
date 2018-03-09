@@ -1,3 +1,3 @@
 export {consumer} from './consumer';
-export {producer} from './producer';
+export {producer, producerFromConfig} from './producer';
 

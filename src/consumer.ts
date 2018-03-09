@@ -3,19 +3,25 @@ import {RollupOptions, SharedOptions, defaultSharedOptions} from './options';
 import {Modules, prefixModuleExports, getModuleNames, sanitizedModules} from './modules';
 import {updateDeep} from './objects';
 
-interface ConsumerOptions extends SharedOptions {}
+export interface ConsumerOptions extends SharedOptions {}
 
 type PartialConsumerOptions = {
   [K in keyof ConsumerOptions]?: ConsumerOptions[K]
 };
 
+export interface ConsumerPlugin extends Plugin {
+  _consumerOptions: ConsumerOptions
+}
+
 const defaultConsumerOptions: ConsumerOptions = Object.assign({}, defaultSharedOptions);
 
-export function consumer(consumerOptions?: PartialConsumerOptions): Plugin {
+export const pluginName = 'splitBundle.consumer';
+
+export function consumer(consumerOptions?: PartialConsumerOptions): ConsumerPlugin {
   const mergedOptions: ConsumerOptions = Object.assign({}, defaultConsumerOptions, consumerOptions);
 
   return {
-    name: 'splitBundle.consumer',
+    name: pluginName,
 
     options(opts: RollupOptions) {
       const {modules, name} = mergedOptions;
@@ -24,7 +30,9 @@ export function consumer(consumerOptions?: PartialConsumerOptions): Plugin {
 
       updateDeep(opts, 'output.globals', (globals: Modules) => Object.assign(globals, prefixedModules), {});
       updateDeep(opts, 'external', (external: string[]) => external.push(...moduleNames), []);
-    }
+    },
+
+    _consumerOptions: mergedOptions
   };
 }
 
