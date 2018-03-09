@@ -5,6 +5,10 @@
   "module": "dist/rollup-plugin-split-bundle.es.js",
   "author": "Emmie Päivärinta <Emmie.Paivarinta@gmail.com>",
   "license": "MIT",
+  "keywords": [
+    "rollup-plugin",
+    "bundle splitting"
+  ],
   "scripts": {
     "build": "$npm_execpath run clean && rollup -c",
     "watch": "$npm_execpath run build -w",
